@@ -4,11 +4,11 @@ import json
 apiDescriptionFile = open('openapi.json')
 apiDescription = json.load(apiDescriptionFile)
 
-def createMethodDef(httpMethod, path):
+def createMethodDef(httpMethod, path, param):
     apiPath = path.replace("/", "_")
     apiPath = apiPath.replace("{", "")
     apiPath = apiPath.replace("}", "")
-    s = "def " + httpMethod + apiPath + "(jwt='', body=None"
+    s = "def " + httpMethod + apiPath + "(jwt='', " + param + "=None"
 
     for arg in re.findall(r'\{\w*\}', path):
         s += ", " + arg.replace("{", "").replace("}", "") + '=None'
@@ -27,19 +27,19 @@ def createUrl(path):
     print("     url = '" + baseUrl + apiPath + "'")
 
 
-def createRequest(httpMethod):
-    print("     req = requests." + httpMethod + "(url, headers=headers, json=body)")
+def createRequest(httpMethod, param):
+    print("     req = requests." + httpMethod + "(url, headers=headers, json=" + param + ")")
 
 
 def createReturn():
     print("     return req.status_code, req.text")
 
 
-def createClientMethod(httpMethod, path):
-    createMethodDef(httpMethod, path)
+def createClientMethod(httpMethod, path, param):
+    createMethodDef(httpMethod, path, param)
     createUrl(path)
     createHeaders()
-    createRequest(httpMethod)
+    createRequest(httpMethod, param)
     createReturn()
     print("")
     print("")
@@ -55,7 +55,14 @@ for path in apiDescription['paths']:
     for httpMethod in apiDescription['paths'][path]:
         #print(httpMethod)
 
-        createClientMethod(httpMethod, path)
+        if 'requestBody' in apiDescription['paths'][path][httpMethod]:
+            params = str(apiDescription['paths'][path][httpMethod]['requestBody']['content']['application/json']['schema']['$ref'])
+            params = params.split('/')
+            param = params[-1]
+            param = param.replace("InUpdate", "").lower()
+            createClientMethod(httpMethod, path, param)
+        else:
+            createClientMethod(httpMethod, path, 'body')
 
 
 
