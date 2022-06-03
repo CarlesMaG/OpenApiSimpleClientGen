@@ -8,6 +8,7 @@ def createMethodDef(httpMethod, path, param):
     apiPath = path.replace("/", "_")
     apiPath = apiPath.replace("{", "")
     apiPath = apiPath.replace("}", "")
+    apiPath = apiPath.replace("-", "_")
     s = "def " + httpMethod + apiPath + "(jwt='', " + param + "=None"
 
     for arg in re.findall(r'\{\w*\}', path):
